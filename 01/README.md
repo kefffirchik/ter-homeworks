@@ -1,11 +1,5 @@
 # Домашнее задание к занятию «Введение в Terraform»
 
-## Ссылка на репозиторий
-
-> https://github.com/kefffirchik/
-
----
-
 # Задание 1
 
 ## 1. Установка Terraform
@@ -268,10 +262,201 @@ keep_locally = true
 
 # Задание 2*
 
-Не выполнялось.
+**Ссылка на код:**  
+https://github.com/kefffirchik/ter-homeworks/01/tree/main/terraform-remote-docker/main.tf
+
+---
+
+## 1. Создание виртуальной машины
+
+Виртуальная машина была создана в Яндекс Облаке через web-консоль.
+
+Параметры ВМ:
+
+- ОС — Ubuntu 24.04
+- vCPU — 2
+- RAM — 2 ГБ
+- Диск — 20 ГБ
+- Публичный IP — назначен автоматически
+
+### Скриншот
+
+![VM](img/yc-vm.png)
+
+---
+
+## 2. Установка Docker
+
+После подключения к ВМ по SSH был установлен Docker.
+
+Проверка установки:
+
+```bash
+docker version
+docker ps
+```
+
+Docker установлен и готов к работе.
+
+---
+
+## 3. Подключение Terraform к удалённому Docker через SSH
+
+Для подключения Terraform к удалённому Docker Engine был использован Docker Provider с подключением по SSH.
+
+Конфигурация провайдера:
+
+```hcl
+provider "docker" {
+  host = "ssh://user@51.250.82.250:22"
+}
+```
+
+Terraform выполняется на локальной машине, а управление Docker осуществляется на удалённой виртуальной машине через SSH.
+
+---
+
+## 4. Генерация паролей
+
+Для генерации секретных данных использовались два ресурса `random_password`.
+
+```hcl
+resource "random_password" "root_password" {
+  length  = 20
+  special = false
+}
+
+resource "random_password" "wordpress_password" {
+  length  = 20
+  special = false
+}
+```
+
+Таким образом были созданы разные пароли для:
+
+- `MYSQL_ROOT_PASSWORD`
+- `MYSQL_PASSWORD`
+
+---
+
+## 5. Создание контейнера MySQL
+
+Использовался образ:
+
+```text
+mysql:8
+```
+
+Контейнер создавался со случайным именем:
+
+```hcl
+name = "example_${random_password.root_password.result}"
+```
+
+Передаваемые переменные окружения:
+
+```hcl
+env = [
+  "MYSQL_ROOT_PASSWORD=${random_password.root_password.result}",
+  "MYSQL_DATABASE=wordpress",
+  "MYSQL_USER=wordpress",
+  "MYSQL_PASSWORD=${random_password.wordpress_password.result}",
+  "MYSQL_ROOT_HOST=%"
+]
+```
+
+Порт MySQL опубликован только на localhost виртуальной машины:
+
+```hcl
+ports {
+  internal = 3306
+  external = 3306
+  ip       = "127.0.0.1"
+}
+```
+
+После выполнения команды
+
+```bash
+terraform apply
+```
+
+контейнер был успешно создан.
+
+### Скриншот
+
+![Container](img/vm-cont.png)
+
+---
+
+## 6. Проверка переменных окружения
+
+Для проверки переданных переменных окружения была выполнена команда:
+
+```bash
+docker exec -it example_<random_password> env
+```
+
+В контейнере присутствуют все необходимые переменные:
+
+- `MYSQL_ROOT_PASSWORD`
+- `MYSQL_DATABASE`
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `MYSQL_ROOT_HOST`
+
+### Скриншот
+
+![ENV](img/exec.png)
+
+---
+
+## Итог
+
+В результате выполнения задания:
+
+- создана виртуальная машина в Яндекс Облаке;
+- установлен Docker;
+- настроено подключение Terraform к удалённому Docker Engine по SSH;
+- создан контейнер `mysql:8`;
+- сгенерированы два различных пароля с помощью `random_password`;
+- секретные значения переданы в контейнер через переменные окружения;
+- выполнена проверка наличия ENV-переменных внутри контейнера.
 
 ---
 
 # Задание 3*
 
-Не выполнялось.
+## Установка OpenTofu
+
+Была установлена OpenTofu версии **1.12.3**.
+
+### Скриншот
+
+![](img/tofu-ver.png)
+
+---
+
+## Выполнение проекта
+
+Для проверки совместимости тот же проект был выполнен с использованием OpenTofu.
+
+Вместо команды:
+
+```bash
+terraform apply
+```
+
+использовалась команда:
+
+```bash
+tofu apply
+```
+
+Конфигурация была успешно применена, контейнер создан без изменений, что подтверждает совместимость OpenTofu с используемой конфигурацией Terraform.
+
+### Скриншот
+
+![](img/tofu-apply.png)
+
+---
