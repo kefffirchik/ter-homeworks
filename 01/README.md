@@ -2,6 +2,11 @@
 
 # Задание 1
 
+**Ссылка на код:**  
+https://github.com/kefffirchik/ter-homeworks/blob/main/01/src/main.tf
+
+---
+
 ## 1. Установка Terraform
 
 Установлена Terraform версии **1.12.1**, что соответствует требованиям задания (>=1.12.0).
