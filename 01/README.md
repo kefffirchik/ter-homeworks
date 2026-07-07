@@ -263,7 +263,7 @@ keep_locally = true
 # Задание 2*
 
 **Ссылка на код:**  
-https://github.com/kefffirchik/ter-homeworks/01/tree/main/terraform-remote-docker/main.tf
+https://github.com/kefffirchik/ter-homeworks/blob/main/01/terraform-remote-docker/main.tf
 
 ---
 
