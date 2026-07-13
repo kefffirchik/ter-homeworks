@@ -154,13 +154,13 @@ core_fraction = 5
 
 ## Виртуальная машина в Yandex Cloud
 
-![VM](img/task1/yc-vm.png)
+![VM](img/yc-vm.png)
 
 ---
 
 ## Проверка внешнего IP
 
-![curl](img/task1/curl.png)
+![curl](img/curl.png)
 
 ---
 
@@ -524,3 +524,95 @@ No changes. Your infrastructure matches the configuration.
 ---
 
 
+# Задание 7
+
+## Работа с Terraform Console
+
+Запуск консоли:
+
+```bash
+terraform console
+```
+
+### Второй элемент списка `test_list`
+
+```hcl
+local.test_list[1]
+```
+
+Результат:
+
+```text
+"staging"
+```
+
+### Длина списка `test_list`
+
+```hcl
+length(local.test_list)
+```
+
+Результат:
+
+```text
+3
+```
+
+### Значение ключа `admin` из `test_map`
+
+```hcl
+local.test_map["admin"]
+```
+
+Результат:
+
+```text
+"John"
+```
+
+### Формирование итоговой строки
+
+```hcl
+"${local.test_map["admin"]} is ${keys(local.test_map)[0]} for ${local.test_list[2]} server based on OS ${local.servers[local.test_list[2]].image} with ${local.servers[local.test_list[2]].cpu} vcpu, ${local.servers[local.test_list[2]].ram} ram and ${length(local.servers[local.test_list[2]].disks)} virtual disks"
+```
+
+Результат:
+
+```text
+"John is admin for production server based on OS ubuntu-20-04 with 10 vcpu, 40 ram and 4 virtual disks"
+```
+
+---
+
+
+# Задание 8
+
+## Описание переменной
+
+Для значения из `terraform.tfvars` была объявлена переменная:
+
+```hcl
+variable "test" {
+  type = list(map(list(string)))
+}
+```
+
+Тип переменной:
+
+- `list` - список;
+- каждый элемент списка представляет собой `map`;
+- значение каждого элемента `map` - список строк (`list(string)`).
+
+## Проверка в Terraform Console
+
+Получение первой SSH-команды:
+
+```hcl
+var.test[0]["dev1"][0]
+```
+
+Результат:
+
+```text
+"ssh -o 'StrictHostKeyChecking=no' ubuntu@62.84.124.117"
+```
