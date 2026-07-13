@@ -319,3 +319,64 @@ memory        = 2
 ```
 
 ---
+
+# Задание 4
+
+## Создание output-переменной
+
+В файле `outputs.tf` был объявлен один output `vms_info`, содержащий информацию о каждой виртуальной машине:
+
+- имя экземпляра (`instance_name`);
+- внешний IP-адрес (`external_ip`);
+- внутренний FQDN (`fqdn`).
+
+Конфигурация output:
+
+```hcl
+output "vms_info" {
+  description = "Информация о созданных виртуальных машинах"
+
+  value = {
+    web = {
+      instance_name = yandex_compute_instance.platform.name
+      external_ip   = yandex_compute_instance.platform.network_interface[0].nat_ip_address
+      fqdn          = yandex_compute_instance.platform.fqdn
+    }
+
+    db = {
+      instance_name = yandex_compute_instance.platform_db.name
+      external_ip   = yandex_compute_instance.platform_db.network_interface[0].nat_ip_address
+      fqdn          = yandex_compute_instance.platform_db.fqdn
+    }
+  }
+}
+```
+
+Все значения получаются из атрибутов ресурсов Terraform, без использования хардкода.
+
+## Проверка
+
+После применения изменений была выполнена команда:
+
+```bash
+terraform output
+```
+
+Результат:
+
+```text
+vms_info = {
+  "db" = {
+    "external_ip" = "84.252.139.233"
+    "fqdn" = "epdec8bt6ag3f2p8972g.auto.internal"
+    "instance_name" = "netology-develop-platform-db"
+  }
+  "web" = {
+    "external_ip" = "93.77.180.40"
+    "fqdn" = "fhmtu3sn584a2j4ktbcs.auto.internal"
+    "instance_name" = "netology-develop-platform-web"
+  }
+}
+```
+
+---
