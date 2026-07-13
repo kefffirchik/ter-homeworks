@@ -424,3 +424,103 @@ No changes. Your infrastructure matches the configuration.
 
 ---
 
+# Задание 6
+
+## Объединение параметров ВМ в map(object)
+
+Параметры ресурсов обеих виртуальных машин были объединены в одну переменную `vms_resources` типа `map(object)`:
+
+```hcl
+variable "vms_resources" {
+  type = map(object({
+    cores         = number
+    memory        = number
+    core_fraction = number
+  }))
+
+  default = {
+    web = {
+      cores         = 2
+      memory        = 1
+      core_fraction = 5
+    }
+
+    db = {
+      cores         = 2
+      memory        = 2
+      core_fraction = 20
+    }
+  }
+}
+```
+
+В ресурсах виртуальных машин параметры используются через вложенные значения:
+
+```hcl
+resources {
+  cores         = var.vms_resources.web.cores
+  memory        = var.vms_resources.web.memory
+  core_fraction = var.vms_resources.web.core_fraction
+}
+```
+
+Для второй ВМ:
+
+```hcl
+resources {
+  cores         = var.vms_resources.db.cores
+  memory        = var.vms_resources.db.memory
+  core_fraction = var.vms_resources.db.core_fraction
+}
+```
+
+## Общая переменная metadata
+
+Для обеих ВМ была создана единая переменная `metadata` типа `map(object)`:
+
+```hcl
+variable "metadata" {
+  type = map(object({
+    serial_port_enable = number
+    ssh_user           = string
+  }))
+
+  default = {
+    common = {
+      serial_port_enable = 1
+      ssh_user           = "ubuntu"
+    }
+  }
+}
+```
+
+В обеих ВМ используется одинаковый блок:
+
+```hcl
+metadata = {
+  serial-port-enable = var.metadata.common.serial_port_enable
+  ssh-keys           = "${var.metadata.common.ssh_user}:${var.vms_ssh_root_key}"
+}
+```
+
+Более не используемые переменные были закомментированы.
+
+## Проверка
+
+После изменений была выполнена команда:
+
+```bash
+terraform plan
+```
+
+Результат:
+
+```text
+No changes. Your infrastructure matches the configuration.
+```
+
+Это подтверждает, что рефакторинг переменных не изменил существующую инфраструктуру.
+
+---
+
+
