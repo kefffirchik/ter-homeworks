@@ -161,3 +161,54 @@ core_fraction = 5
 ## Проверка внешнего IP
 
 ![curl](img/task1/curl.png)
+
+---
+
+# Задание 2
+
+## Замена хардкод-значений на переменные
+
+Выполнены следующие изменения:
+
+- все хардкод-значения в ресурсе `yandex_compute_instance` вынесены в переменные;
+- значение семейства образов в `yandex_compute_image` также вынесено в отдельную переменную;
+- все переменные, относящиеся к виртуальной машине, получили префикс `vm_web_`;
+- для всех переменных указан тип (`string`, `number`, `bool`);
+- значения `default` соответствуют исходным значениям конфигурации.
+
+### Используемые переменные
+
+| Переменная | Значение по умолчанию |
+|------------|----------------------:|
+| `vm_web_name` | `netology-develop-platform-web` |
+| `vm_web_platform_id` | `standard-v1` |
+| `vm_web_image_family` | `ubuntu-2004-lts` |
+| `vm_web_cores` | `2` |
+| `vm_web_memory` | `1` |
+| `vm_web_core_fraction` | `5` |
+| `vm_web_preemptible` | `true` |
+| `vm_web_nat` | `true` |
+| `vm_web_serial_port_enable` | `1` |
+| `vm_web_ssh_user` | `ubuntu` |
+
+---
+
+## Проверка Terraform
+
+После замены всех хардкод-значений была выполнена проверка:
+
+```bash
+terraform plan
+```
+
+Результат:
+
+```text
+No changes. Your infrastructure matches the configuration.
+```
+
+Это подтверждает, что перенос значений в переменные не изменил существующую инфраструктуру.
+
+---
+
+
