@@ -211,4 +211,111 @@ No changes. Your infrastructure matches the configuration.
 
 ---
 
+# Задание 3
 
+## Создание второй виртуальной машины
+
+Для переменных виртуальных машин был создан отдельный файл:
+
+```text
+vms_platform.tf
+```
+
+В него были перенесены переменные первой ВМ с префиксом:
+
+```text
+vm_web_
+```
+
+Для второй ВМ были объявлены отдельные переменные с префиксом:
+
+```text
+vm_db_
+```
+
+В файле `main.tf` была создана вторая виртуальная машина:
+
+```text
+netology-develop-platform-db
+```
+
+Параметры второй ВМ:
+
+```hcl
+name          = "netology-develop-platform-db"
+zone          = "ru-central1-b"
+cores         = 2
+memory        = 2
+core_fraction = 20
+```
+
+Так как ВМ размещается в зоне `ru-central1-b`, для неё была создана отдельная подсеть:
+
+```text
+develop-db
+```
+
+с адресным диапазоном:
+
+```text
+10.0.2.0/24
+```
+
+## Проверка плана
+
+Перед применением изменений была выполнена команда:
+
+```bash
+terraform plan
+```
+
+Результат:
+
+```text
+Plan: 2 to add, 0 to change, 0 to destroy.
+```
+
+Terraform планировал создать:
+
+- новую подсеть в зоне `ru-central1-b`;
+- вторую виртуальную машину.
+
+Первая ВМ при этом не изменялась и не пересоздавалась.
+
+## Результат применения
+
+После выполнения:
+
+```bash
+terraform apply
+```
+
+были успешно созданы две виртуальные машины:
+
+```text
+netology-develop-platform-db  - ru-central1-b
+netology-develop-platform-web - ru-central1-a
+```
+
+Проверка через Yandex Cloud CLI:
+
+```text
++----------------------+-------------------------------+---------------+---------+----------------+-------------+
+|          ID          |             NAME              |    ZONE ID    | STATUS  |  EXTERNAL IP   | INTERNAL IP |
++----------------------+-------------------------------+---------------+---------+----------------+-------------+
+| epdec8bt6ag3f2p8972g | netology-develop-platform-db  | ru-central1-b | RUNNING | 84.252.139.233 | 10.0.2.16   |
+| fhmtu3sn584a2j4ktbcs | netology-develop-platform-web | ru-central1-a | RUNNING | 93.77.180.40   | 10.0.1.16   |
++----------------------+-------------------------------+---------------+---------+----------------+-------------+
+```
+
+Параметры второй ВМ были дополнительно проверены через Terraform State:
+
+```text
+name          = "netology-develop-platform-db"
+zone          = "ru-central1-b"
+core_fraction = 20
+cores         = 2
+memory        = 2
+```
+
+---
