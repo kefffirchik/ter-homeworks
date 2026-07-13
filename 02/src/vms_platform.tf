@@ -1,3 +1,21 @@
+variable "vm_name_prefix" {
+  type        = string
+  description = "Общий префикс имен виртуальных машин"
+  default     = "netology"
+}
+
+variable "vm_web_role" {
+  type        = string
+  description = "Назначение первой виртуальной машины"
+  default     = "platform-web"
+}
+
+variable "vm_db_role" {
+  type        = string
+  description = "Назначение второй виртуальной машины"
+  default     = "platform-db"
+}
+
 # Параметры первой ВМ — web
 
 variable "vm_web_image_family" {

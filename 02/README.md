@@ -380,3 +380,47 @@ vms_info = {
 ```
 
 ---
+
+# Задание 5
+
+## Использование локальных значений
+
+В файле `locals.tf` был создан один блок `locals`, в котором формируются имена обеих виртуальных машин:
+
+```hcl
+locals {
+  vm_web_name = "${var.vm_name_prefix}-${var.vpc_name}-${var.vm_web_role}"
+  vm_db_name  = "${var.vm_name_prefix}-${var.vpc_name}-${var.vm_db_role}"
+}
+```
+
+Для формирования каждого имени используется интерполяция `${...}` с несколькими переменными.
+
+В ресурсах виртуальных машин значения `name` были заменены на локальные значения:
+
+```hcl
+name = local.vm_web_name
+```
+
+и
+
+```hcl
+name = local.vm_db_name
+```
+
+После изменений была выполнена проверка:
+
+```bash
+terraform plan
+```
+
+Результат:
+
+```text
+No changes. Your infrastructure matches the configuration.
+```
+
+Это подтверждает, что имена ВМ формируются через `locals`, но сами значения остались прежними.
+
+---
+
