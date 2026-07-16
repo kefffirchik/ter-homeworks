@@ -106,3 +106,105 @@ dynamic "secondary_disk" {
 
 ---
 
+## Задание 4
+
+Создан файл `ansible.tf`, формирующий динамический inventory-файл Ansible с использованием функции `templatefile()`.
+
+Создан шаблон `hosts.tftpl`, который автоматически формирует группы виртуальных машин независимо от их количества.
+
+В итоговый inventory включены три группы:
+
+- `webservers`;
+- `databases`;
+- `storage`.
+
+Для каждой виртуальной машины выводятся:
+
+- имя;
+- внешний IP-адрес (`ansible_host`);
+- полное доменное имя (`fqdn`).
+
+Полученный файл `hosts.ini`:
+
+### Скриншот
+
+![Содержимое файла hosts.ini](img/hosts.png)
+
+---
+
+
+## Задание 5*
+
+Создан output `vms`, отображающий виртуальные машины, созданные с использованием ресурсов `count` и `for_each`, в виде списка словарей.
+
+Для формирования списка используется функция `concat()`, объединяющая результаты двух циклов:
+
+- по ресурсу `yandex_compute_instance.web`, созданному с помощью `count`;
+- по ресурсу `yandex_compute_instance.db`, созданному с помощью `for_each`.
+
+Каждый элемент списка содержит:
+
+- имя виртуальной машины;
+- идентификатор;
+- внутреннее доменное имя (`fqdn`).
+
+### Скриншот
+
+![Вывод terraform output](img/output.png)
+
+---
+
+## Задание 6*
+
+В файл `ansible.tf` добавлен ресурс `null_resource`, использующий провижионер `local-exec` для автоматического запуска Ansible Playbook после создания инфраструктуры.
+
+Для формирования inventory используется функция `templatefile()` и шаблон `hosts.tftpl`.
+
+Запуск Ansible выполняется командой:
+
+```hcl
+provisioner "local-exec" {
+  command = <<-EOT
+    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+      -i ${local_file.ansible_inventory.filename} \
+      ${path.module}/test.yml \
+      --private-key ~/.ssh/id_ed25519 \
+      -u ubuntu
+  EOT
+}
+```
+
+В шаблоне `hosts.tftpl` реализован автоматический выбор адреса для подключения:
+
+- при наличии внешнего IP используется `nat_ip_address`;
+- при отсутствии внешнего IP используется внутренний `ip_address`.
+
+```hcl
+ansible_host=${vm.network_interface[0].nat_ip_address != "" ? vm.network_interface[0].nat_ip_address : vm.network_interface[0].ip_address}
+```
+
+Работа `null_resource` проверена успешным запуском Ansible Playbook для всех созданных виртуальных машин.
+
+После изменения параметра `nat = false` для всех виртуальных машин inventory автоматически переключается на использование внутренних IP-адресов, что позволяет использовать его при работе через bastion-сервер.
+
+---
+
+## Задание 7*
+
+Выражение для удаления третьего элемента из списков `subnet_ids` и `subnet_zones`:
+
+```hcl
+merge(local.vpc, {
+  subnet_ids = concat(
+    slice(local.vpc.subnet_ids, 0, 2),
+    slice(local.vpc.subnet_ids, 3, length(local.vpc.subnet_ids))
+  )
+
+  subnet_zones = concat(
+    slice(local.vpc.subnet_zones, 0, 2),
+    slice(local.vpc.subnet_zones, 3, length(local.vpc.subnet_zones))
+  )
+})
+```
+
+---
