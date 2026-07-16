@@ -34,43 +34,19 @@ terraform apply
 
 ## Задание 2
 
-### ВМ с использованием `count`
-
-В файле `count-vm.tf` описано создание двух одинаковых виртуальных машин:
+Создан файл `count-vm.tf`, в котором с использованием мета-аргумента `count` созданы две одинаковые виртуальные машины:
 
 - `web-1`;
 - `web-2`.
 
-Для создания ВМ используется мета-аргумент:
+К виртуальным машинам подключена группа безопасности, созданная в задании 1.
 
-```hcl
-count = 2
-```
-
-Имена формируются выражением:
-
-```hcl
-name = "web-${count.index + 1}"
-```
-
-Благодаря добавлению `1` к `count.index` виртуальные машины получают имена `web-1` и `web-2`.
-
-К обеим виртуальным машинам подключена группа безопасности, созданная в задании 1:
-
-```hcl
-security_group_ids = [
-  yandex_vpc_security_group.example.id
-]
-```
-
-### ВМ с использованием `for_each`
-
-В файле `for_each-vm.tf` описано создание двух виртуальных машин для баз данных:
+Создан файл `for_each-vm.tf`, в котором с использованием мета-аргумента `for_each` созданы две виртуальные машины баз данных:
 
 - `main`;
 - `replica`.
 
-Параметры ВМ задаются общей переменной `each_vm`:
+Параметры виртуальных машин задаются общей переменной:
 
 ```hcl
 variable "each_vm" {
@@ -80,88 +56,53 @@ variable "each_vm" {
     ram         = number
     disk_volume = number
   }))
-
-  default = [
-    {
-      vm_name     = "main"
-      cpu         = 2
-      ram         = 2
-      disk_volume = 10
-    },
-    {
-      vm_name     = "replica"
-      cpu         = 2
-      ram         = 4
-      disk_volume = 15
-    }
-  ]
 }
 ```
 
-Для использования списка в `for_each` он преобразуется в map:
+Виртуальные машины `web-*` создаются после `main` и `replica` с помощью `depends_on`.
+
+Для чтения публичного SSH-ключа используется функция `file()` в локальной переменной.
+
+### Скриншот
+
+![Созданные виртуальные машины](img/machines.png)
+
+---
+
+## Задание 3
+
+Создан файл `disk_vm.tf`.
+
+С помощью ресурса `yandex_compute_disk` и мета-аргумента `count` создаются три одинаковых диска размером 1 ГБ:
 
 ```hcl
-for_each = {
-  for vm in var.each_vm : vm.vm_name => vm
+resource "yandex_compute_disk" "storage" {
+  count = 3
+
+  name = "storage-disk-${count.index + 1}"
+  size = 1
 }
 ```
 
-В результате создаются ресурсы:
+Создана одиночная виртуальная машина `storage`.
 
-```text
-yandex_compute_instance.db["main"]
-yandex_compute_instance.db["replica"]
-```
-
-### Зависимость между ВМ
-
-Виртуальные машины `web-1` и `web-2` создаются после ВМ `main` и `replica`.
-
-Для этого используется явная зависимость:
+Для подключения дополнительных дисков используется блок `dynamic secondary_disk` и мета-аргумент `for_each`:
 
 ```hcl
-depends_on = [
-  yandex_compute_instance.db
-]
-```
+dynamic "secondary_disk" {
+  for_each = yandex_compute_disk.storage
 
-### Использование SSH-ключа
-
-Публичный SSH-ключ считывается функцией `file` в локальную переменную:
-
-```hcl
-locals {
-  ssh_public_key = file(pathexpand("~/.ssh/id_ed25519.pub"))
+  content {
+    disk_id = secondary_disk.value.id
+  }
 }
 ```
 
-Ключ передаётся в metadata виртуальных машин:
+В результате к виртуальной машине `storage` автоматически подключаются три дополнительных диска.
 
-```hcl
-metadata = {
-  ssh-keys = "ubuntu:${local.ssh_public_key}"
-}
-```
+### Скриншот
 
-### Результат выполнения
-
-Конфигурация была проверена командой:
-
-```bash
-terraform validate
-```
-
-Результат:
-
-```text
-Success! The configuration is valid.
-```
-
-После применения конфигурации были созданы четыре виртуальные машины:
-
-```text
-Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
-```
+![Подключенные дополнительные диски](img/storage.png)
 
 ---
 
